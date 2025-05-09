@@ -1,0 +1,101 @@
+---
+title: "Assignment 1"
+author: "Andrea Češková"
+output: html_document
+---
+
+```{r}
+library(pacman)
+
+pacman::p_load(
+  ggplot2,
+  dplyr,
+  sf,
+  raster,
+  rnaturalearth,
+ rnaturalearthdata,
+ grid,
+ ggspatial,
+ gridExtra,
+ ggrepel,
+ tidygeocoder,
+ osrm ,
+  here,
+  terra,
+  tidyr,
+ RColorBrewer
+)
+
+here::i_am("Assignment 1/Assignment 1.Rmd")
+```
+
+## Step 1: Country Boundaries
+
+As instructed, I downloaded the data from [GADM](https://gadm.org/download_country.html).
+
+```{r}
+cze_0 <- st_read(here("Assignment 1", "gadm41_CZE_0.shp"))
+
+ggplot()+
+  geom_sf(data = cze_0)+
+  theme_minimal()
+```
+
+## Step 2: Vector Feature
+
+I chose to add a vector layer of protected nature areas. The data comes from the [open data portal of the Nature and Landscape Conservation Agency of the Czech Republic](https://gis-aopkcr.opendata.arcgis.com/). It was possible to download the layer in the form of shapefile.
+
+```{r}
+vzchu_cz <- st_read(here("Assignment 1", "VZCHU", "Velkoplošná_zvláště_chráněná_území.shp"))
+
+```
+
+## Step 3: Visualize
+
+```{r}
+final_map <- ggplot() +
+  geom_sf(data = cze_0, 
+          fill = "white", 
+          color = "darkgray", 
+          size = 0.5) +
+  geom_sf(data = vzchu_cz,
+          aes(fill = KAT),
+          color = "darkgray",
+          alpha = 0.8,
+          size = 0.5) +
+  scale_fill_manual(
+    values = c(
+      "NP" = brewer.pal(9, "Greens")[9],    
+      "CHKO" = brewer.pal(9, "Greens")[6],  
+      "OP" = brewer.pal(9, "Greens")[3]     
+    ),
+    labels = c(
+      "NP" = "National Parks",
+      "CHKO" = "Protected Landscape Areas",
+      "OP" = "Other Protected Areas"
+    ),
+    breaks = c("NP", "CHKO", "OP"),
+    name = "Protected Area Type"
+  ) +
+  geom_sf_text(data = vzchu_cz, 
+               aes(label = NAZEV), 
+               size = 3,
+               fontface = "bold",
+               check_overlap = TRUE) +
+  labs(
+    title = "Protected Natural Areas in Czech Republic",
+    subtitle = "National Parks and Protected Landscape Areas",
+    caption = "Data source: GADM and AOPK ČR, 2025"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 12),
+    legend.title = element_text(face = "bold"),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  ) 
+
+final_map
+```
